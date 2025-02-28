@@ -137,25 +137,40 @@ export const getPassphrase = (bits, grammars = DEFAULT_GRAMMARS) => {
       let wordType = parts[0];
       let wordBits = parts[1] || -1;
       wordBits = parseInt(wordBits);
-      if(wordBits >= 2 && wordBits <= 16) {
-          if(!words.hasOwnProperty(wordType) || words[wordType].length < (1 << wordBits)) {
-              console.log("Error in grammar! Word type: "+ wordType+" // Word Bits: "+words[wordType].length + " // Expected length: " + (1 << wordBits));
-              errorInGrammar = true;
-              return;
-          }
-          actualBits = actualBits + wordBits;
-          let bitMask = (1 << wordBits) - 1;
-          let randomNumber = randomNumbers[randomNumberIndex] & bitMask; // get a random number that is X random bits long
-          randomNumberIndex++;
-          phrase.push(words[wordType][randomNumber])
+      
+      // Special case for :0 - use full word list length
+      if (wordBits === 0) {
+        if (!words.hasOwnProperty(wordType)) {
+          console.log("Error in grammar! Word type does not exist: " + wordType);
+          errorInGrammar = true;
+          return;
+        }
+        const listLength = words[wordType].length;
+        let randomNumber = randomNumbers[randomNumberIndex] % listLength;
+        randomNumberIndex++;
+        phrase.push(words[wordType][randomNumber]);
+        actualBits = actualBits + Math.log2(listLength);
+      }
+      // Regular case - validate bit length
+      else if(wordBits >= 2 && wordBits <= 16) {
+        if(!words.hasOwnProperty(wordType) || words[wordType].length < (1 << wordBits)) {
+          console.log("Error in grammar! Word type: "+ wordType+" // Word Bits: "+words[wordType].length + " // Expected length: " + (1 << wordBits));
+          errorInGrammar = true;
+          return;
+        }
+        actualBits = actualBits + wordBits;
+        let bitMask = (1 << wordBits) - 1;
+        let randomNumber = randomNumbers[randomNumberIndex] & bitMask; // get a random number that is X random bits long
+        randomNumberIndex++;
+        phrase.push(words[wordType][randomNumber])
       }
       else {
-          phrase.push(component);
+        phrase.push(component);
       }
   });
   if(errorInGrammar) {
-      // TO DO: Better error handling
-      return  "Error: error in grammar";
+    // TO DO: Better error handling
+    return  "Error: error in grammar";
   }
   return phrase.join("");
 };

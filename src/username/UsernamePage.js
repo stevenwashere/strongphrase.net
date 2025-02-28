@@ -8,20 +8,20 @@ const UsernameDisplay = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [usernames, setUsernames] = useState({});
   const [copiedBits, setCopiedBits] = useState(null);
-  const [includeNumbers, setIncludeNumbers] = useState(searchParams.get('numbers') !== 'false');
+  const [includeNumbers, setIncludeNumbers] = useState(searchParams.get('numbers') === 'true');
   const [capitalize, setCapitalize] = useState(searchParams.get('capitalize') !== 'false');
-  const [numOptions, setNumOptions] = useState(Number(searchParams.get('options')) || 4);
+  const [numOptions, setNumOptions] = useState(Number(searchParams.get('options')) || 16);
   const [generationCount, setGenerationCount] = useState(0);
 
   const entropyLevels = {
-    'a': 24,
-    'b': 28,
-    'c': 30,
-    'd': 32,
+    'a': 20,
+    // 'b': 28,
+    // 'c': 30,
+    // 'd': 32,
   };
 
   const baseOptionsCount = Object.keys(entropyLevels).length;
-  const optionMultiples = [1, 2, 4, 8]; // How many of each type to show
+  const optionMultiples = [8, 16, 32]; // How many of each type to show
   const optionsChoices = optionMultiples.map(multiple => ({
     value: baseOptionsCount * multiple,
     label: `${baseOptionsCount * multiple} options`
@@ -75,12 +75,11 @@ const UsernameDisplay = () => {
   }, [includeNumbers]);
 
   const formatComponent = useCallback((component, index, totalComponents) => {
-    const isNumber = includeNumbers && index === totalComponents - 1;
-    if (capitalize && !isNumber) {
+    if (capitalize) {
       return component.charAt(0).toUpperCase() + component.slice(1);
     }
     return component;
-  }, [capitalize, includeNumbers]);
+  }, [capitalize]);
 
   const getDisplayUsername = useCallback((components) => {
     return getDisplayComponents(components)
@@ -98,7 +97,7 @@ const UsernameDisplay = () => {
   const renderUsernameContent = useCallback((components) => {
     const displayComponents = getDisplayComponents(components);
     return displayComponents.map((component, index) => (
-      <span key={index} className={`${getComponentColor(component, index, displayComponents.length)} font-medium`}>
+      <span key={index} className={`${getComponentColor(component, index, displayComponents.length)}`}>
         {formatComponent(component, index, displayComponents.length)}
       </span>
     ));
@@ -107,7 +106,7 @@ const UsernameDisplay = () => {
   const handleIncludeNumbersChange = (e) => {
     const value = e.target.checked;
     setIncludeNumbers(value);
-    updateUrlParams({ numbers: value === true ? null : 'false' });
+    updateUrlParams({ numbers: value === false ? null : 'true' });
   };
 
   const handleCapitalizeChange = (e) => {

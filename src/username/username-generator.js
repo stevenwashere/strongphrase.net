@@ -1,6 +1,8 @@
 import { getPassphrase } from '../passphraseUtils';
 
 const usernameGrammars = {
+
+  20: "adj-animal:0| |animal:0| |number:5",
   // 2 concrete words + number
   24: "adj:8| |noun-concrete:8| |number:6",
   // 2 animate words + number
@@ -13,7 +15,7 @@ const usernameGrammars = {
   40: "adj-animate:8| |adj-concrete:8| |noun-animate:8| |number:6",
 };
 
-export const generateUsername = (bits = 24) => {
+export const generateUsername = (bits = 20) => {
   // Ensure we use a valid bit length
   const validBits = Object.keys(usernameGrammars).map(Number);
   const closestBits = validBits.reduce((prev, curr) => 
@@ -32,6 +34,6 @@ export const generateUsername = (bits = 24) => {
   };
 };
 
-export const generateUsernames = (count = 5, bits = 28) => {
+export const generateUsernames = (count = 5, bits = 20) => {
   return Array(count).fill().map(() => generateUsername(bits));
 };
