@@ -106,8 +106,11 @@ export const getAllGrammarLabels = () => {
 };
 
 
-let getBitLength = function(bits) {
+let getBitLength = function(bits, validate = true) {
   let bitLength = parseInt(bits);
+  if (!validate) {
+    return bitLength;
+  }
   if(!(bitLength >= 1)) {
       bitLength = 50;
   }
@@ -117,11 +120,11 @@ let getBitLength = function(bits) {
   return bitLength;
 }
 
-export const getPassphrase = (bits, grammars = DEFAULT_GRAMMARS) => {        
+export const getPassphrase = (bits, grammars = DEFAULT_GRAMMARS, validate = true) => {        
   if(!cryptoAvailable()) {
       return "Error: Your browser cannot generate secure passphrases";
   }
-  bits = getBitLength(bits);
+  bits = getBitLength(bits, validate);
   const grammar = grammars[bits];
   if (!grammar) return "Invalid bit length";
   const numRandomWords = grammar.split(":").length - 1;

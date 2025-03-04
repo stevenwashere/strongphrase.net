@@ -10,7 +10,7 @@ import EntropyCrackTimeTable from './EntropyCrackTable';
 import EntropyPerCharTable from './EntropyPerChar.js';
 import ScrollToTop from './helpers/ScrollToTop';
 import UsernamePage from './username/UsernamePage.js';
-
+import IdentityPage from './identity/IdentityPage.js';
 
 const Home = () => (
   <>
@@ -42,7 +42,10 @@ const App = () => {
                   <li><NavLink activeClassName="active" to="/">Passphrase</NavLink></li>
                   <li><NavLink activeClassName="active" to="/passcode">Phone Passcode</NavLink></li>
                   <li><NavLink activeClassName="active" to="/username">Username</NavLink></li>
+                  <li><NavLink activeClassName="active" to="/identity">Identity</NavLink></li>
                   <li><NavLink activeClassName="active" to="/table">Cracking Times</NavLink></li>
+                  
+
                 </ul>
               </div>
             </div>
@@ -55,9 +58,10 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/passcode" element={<PasscodePage />} />
+            <Route path="/username" element={<UsernamePage />} />
+            <Route path="/identity" element={<IdentityPage />} />
             <Route path="/table" element={<EntropyCrackTimeTable />} />
             <Route path="/entropy-per-char" element={<EntropyPerCharTable />} />
-            <Route path="/username" element={<UsernamePage />} />
           </Routes>
 
         </div>

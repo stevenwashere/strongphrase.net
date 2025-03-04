@@ -1,19 +1,20 @@
 import { getPassphrase } from '../passphraseUtils';
 
 const usernameGrammars = {
-
   20: "adj-animal:0| |animal:0| |number:5",
   // 2 concrete words + number
   24: "adj:8| |noun-concrete:8| |number:6",
   // 2 animate words + number
   28: "adj-animate:9| |noun-animate:9| |number:6",
-  // 3 concrete words + number
-  30: "adj:8| |noun-concrete:8| |verb-s:8| |number:6",
-  // 3 animate words + number
-  32: "adj-animate:9| |noun-animate:9| |verb-s:9| |number:6",
-  // 3 animate words (double adjective) + number
-  40: "adj-animate:8| |adj-concrete:8| |noun-animate:8| |number:6",
+  // // 3 concrete words + number
+  // 30: "adj:8| |noun-concrete:8| |verb-s:8| |number:6",
+  // // 3 animate words + number
+  // 32: "adj-animate:9| |noun-animate:9| |verb-s:9| |number:6",
+  // // 3 animate words (double adjective) + number
+  // 40: "adj-animate:8| |adj:8| |noun-animate:8| |number:6",
 };
+
+export const usernameTypes = Object.keys(usernameGrammars).map(Number);
 
 export const generateUsername = (bits = 20) => {
   // Ensure we use a valid bit length
@@ -22,11 +23,11 @@ export const generateUsername = (bits = 20) => {
     Math.abs(curr - bits) < Math.abs(prev - bits) ? curr : prev
   );
   
-  const rawPassphrase = getPassphrase(closestBits, usernameGrammars);
+  const rawPassphrase = getPassphrase(closestBits, usernameGrammars, false);
   const components = rawPassphrase
-    .toLowerCase()
     .split(' ')
-    .map(word => word.replace(/[^a-z0-9]/g, ''));
+    .map(word => word.replace(/[^a-z0-9]/g, ''))
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1));
   
   return {
     username: components.join(''),
