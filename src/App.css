@@ -34,6 +34,14 @@ footer a.link, footer a:hover.link, footer a:active.link, footer a:visited.link 
   @apply mb-2;
 }
 
+.password-scheme .card-body {
+  @apply flex flex-col items-start justify-start;
+}
+
+.password-scheme p {
+  @apply mb-2;
+}
+
 .content p {
   @apply mt-2 mb-4 last:mb-0;
 }

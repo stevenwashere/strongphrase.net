@@ -7,7 +7,7 @@ const PasswordSchemeCard = () => {
     <div className="flex flex-col md:flex-row bg-gray-100 shadow-lg mt-20 card password-scheme">
       <div className="card-body w-full">
         <h2 className="card-title block"><HiOutlineChatBubbleOvalLeftEllipsis className="text-3xl inline-block mr-1 mb-1" />Use a <u>passphrase</u> for...</h2>
-        <p>Use randomly-generated pass<strong className="italic">phrase</strong> for each of your most important accounts that you type often:</p>
+        <span>Use randomly-generated pass<strong className="italic">phrase</strong> for each of your most important accounts that you type often:</span>
         <ul className="list-disc list-inside">
           <li>Your master password for your password manager</li>
           <li>Laptop</li>
@@ -15,7 +15,7 @@ const PasswordSchemeCard = () => {
           <li>Wi-fi</li>
         </ul>
 
-        <p className="example-label font-bold">Examples:</p>
+        <span className="example-label font-bold">Examples:</span>
         <ul className="password-examples">
           <li><code>harsh robin finds orange jalapeno</code></li>
           <li><code>amateur dog and unruly pony steal icy sock</code></li>
@@ -29,16 +29,17 @@ const PasswordSchemeCard = () => {
         <p>
           Use a <strong>password manager</strong> with <strong>unique, randomly-generated</strong> passwords for everything else. 
           It will generate random passwords for each website and automatically fill them for you each time you log-in, so you don't have to type them. 
-          (We suggest <a href="https://1password.com/" className="link" target="_blank" rel="noreferrer">1Password</a>). Turn on 2-factor authentication on your most important accounts (email, bank, etc.).
+          (We suggest <a href="https://1password.com/" className="link" target="_blank" rel="noreferrer">1Password</a> or <a href="https://bitwarden.com/" className="link" target="_blank" rel="noreferrer">Bitwarden</a>). Turn on 2-factor authentication on your most important accounts (email, bank, etc.).
         </p>
-        <p className="mb-2 example-label font-bold">Examples:</p>
+        <span className="mb-2 example-label font-bold">Examples:</span>
         <ul className="password-examples">
           <li><code>7ZuNburjjGmme-MDuE*</code></li>
           <li><code>3@Y@qXWb@LKnd7qCfsd</code></li>
         </ul>
         
         <div className="card-actions justify-end">
-          <a className="btn btn-secondary text-white" href="https://1password.com" target="_blank" rel="noreferrer">Get 1Password</a>
+          <a className="btn btn-secondary text-white mr-2" href="https://1password.com" target="_blank" rel="noreferrer">Get 1Password</a>
+          <a className="btn btn-secondary text-white" href="https://bitwarden.com" target="_blank" rel="noreferrer">Get Bitwarden</a>
         </div>
       </div>
     </div>
