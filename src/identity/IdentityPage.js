@@ -1,97 +1,23 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { generateIdentities } from './IdentityUtils';
 import PageToolbar from '../components/PageToolbar';
-import { FaRegCopy, FaCheck, FaDownload, FaChevronRight, FaInfoCircle } from "react-icons/fa";
+import { 
+  FaRegCopy, FaCheck, FaChevronRight, FaInfoCircle, 
+  FaEnvelope, FaPhone, FaMapMarkerAlt, FaBirthdayCake, 
+  FaAt, FaHourglassStart, FaStar
+ } from "react-icons/fa";
 import { cn } from '../components/utils';
 import { avatarProviders } from './AvatarUtils';
 import ToolbarStorage from '../components/storage';
+import AvatarDownloadOverlay, { useAvatarDownload } from './AvatarDownload';
 
 const IdentityCard = ({ identity, onCopy, copiedField }) => {
   const { name, phone, address, avatar, gradient, id, birthday, username, disposableEmail } = identity;
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [downloadStatus, setDownloadStatus] = useState(null); // 'downloading' | 'success' | null
   const imgRef = useRef(null);
-
-  // Create a proxy URL for images that don't support CORS
-  const getProxyUrl = (url) => {
-    if (url.includes('dicebear')) return url; // dicebear supports CORS reliably
-    if (url.includes('avataaars.io')) {
-      // For avataaars.io, use raw.githubusercontent.com proxy which handles SVGs better
-      return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-    }
-    // Use weserv for other images
-    return `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
-  };
-
-  const handleImageDownload = async (e) => {
-    e.stopPropagation();
-    try {
-      console.log('Setting status to downloading');
-      setDownloadStatus('downloading');
-      const fileName = `${name.firstName.toLowerCase()}-${name.lastName.toLowerCase()}-${avatar.type}`;
-      
-      // Create a temporary image to load the proxied URL for download
-      const tempImg = new Image();
-      const proxiedUrl = getProxyUrl(avatar.url);
-      
-      tempImg.crossOrigin = 'anonymous';  // Enable this since we're using the proxy
-      tempImg.src = proxiedUrl;
-      
-      await new Promise((resolve, reject) => {
-        tempImg.onload = resolve;
-        tempImg.onerror = reject;
-      });
-      
-      // Create a canvas element
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      // Set canvas size to match image
-      canvas.width = tempImg.naturalWidth;
-      canvas.height = tempImg.naturalHeight;
-      
-      // Draw image onto canvas
-      ctx.drawImage(tempImg, 0, 0);
-      
-      // For SVG (dicebear) or transparent avatars, ensure white background
-      if (avatar.url.includes('dicebear') || avatar.url.includes('avataaars.io')) {
-        // Save current state
-        ctx.save();
-        // Draw white background
-        ctx.globalCompositeOperation = 'destination-over';
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        // Restore state
-        ctx.restore();
-      }
-      
-      // Convert to blob and download
-      canvas.toBlob((blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${fileName}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-        console.log('Setting status to success');
-        setDownloadStatus('success');
-        
-        // Reset status after 2 seconds - now with no transition
-        setTimeout(() => {
-          setDownloadStatus(null);
-        }, 2000);
-      }, 'image/png');
-      
-    } catch (error) {
-      console.error('Error downloading image:', error);
-      console.log('Error occurred, setting status to null');
-      setDownloadStatus(null);
-    }
-  };
+  
+  const { downloadStatus, handleImageDownload } = useAvatarDownload(avatar, name);
 
   // Create a reusable copy button component
   const CopyButton = ({ text, type, white = false, className = "", icon = <FaRegCopy />, size = "small", tooltip = null, tooltipPosition = "bottom" }) => {
@@ -104,7 +30,7 @@ const IdentityCard = ({ identity, onCopy, copiedField }) => {
           onCopy(text, type, id);
         }}
         className={cn(
-          `p-1 rounded-full transition-colors flex items-center justify-center relative group`,
+          `p-1 rounded-full transition-colors flex items-center justify-center relative group cursor-pointer`,
           size === "small" ? "" : "p-2",
           white ? 'hover:bg-white/20' : 'hover:bg-gray-100',
           className
@@ -150,7 +76,8 @@ const IdentityCard = ({ identity, onCopy, copiedField }) => {
     white = false, 
     label = "",
     children = null,
-    isChild = false 
+    isChild = false,
+    icon = null
   }) => {
     return (
       <>
@@ -163,15 +90,22 @@ const IdentityCard = ({ identity, onCopy, copiedField }) => {
             className
           )}
         >
-          <span className={`${isName ? 'text-2xl font-semibold' : 'text-sm'} ${white ? 'text-white' : 'text-gray-700'} relative group/value`}>
-            {content}
-            {!isName && label && (
-              <div className="absolute top-1/2 left-full -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded 
-                opacity-0 group-hover/value:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                {label}
-              </div>
+          <div className="flex items-center">
+            {!isName && icon && (
+              <span className="text-gray-300 mr-2 w-4 flex-shrink-0">
+                {icon}
+              </span>
             )}
-          </span>
+            <span className={`${isName ? 'text-2xl font-semibold' : 'text-sm'} ${white ? 'text-white' : 'text-gray-700'} relative group/value`}>
+              {content}
+              {!isName && label && (
+                <div className="absolute top-1/2 left-full -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded 
+                  opacity-0 group-hover/value:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                  {label}
+                </div>
+              )}
+            </span>
+          </div>
           <CopyButton className={isName ? "!ml-2" : "!ml-4"} text={content} type={type} white={white} />
         </div>
         {children}
@@ -253,24 +187,10 @@ Birthday: ${birthday}`;
             </div>
             
             {/* Download overlay with status */}
-            <div 
-              onClick={handleImageDownload}
-              className={cn(
-                "absolute inset-0 flex items-center justify-center rounded-full",
-                downloadStatus ? "opacity-100" : "opacity-0 group-hover:opacity-100",
-                downloadStatus === 'success' ? "bg-green-500/50" : "bg-black/50",
-                // Remove transition for instant disappearance when status changes to null
-                downloadStatus === null ? "" : "transition-all duration-300"
-              )}
-            >
-              {downloadStatus === 'downloading' ? (
-                <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
-              ) : downloadStatus === 'success' ? (
-                <FaCheck className="w-8 h-8 text-white" />
-              ) : !downloadStatus && (
-                <FaDownload className="w-8 h-8 text-white" />
-              )}
-            </div>
+            <AvatarDownloadOverlay 
+              downloadStatus={downloadStatus} 
+              handleImageDownload={handleImageDownload} 
+            />
           </div>
         </div>
       </div>
@@ -279,11 +199,12 @@ Birthday: ${birthday}`;
       <div className="px-6 pb-5 overflow-visible">
         {/* Info Section */}
         <div className="mt-2 overflow-visible">
-          <InfoRow content={name.email} type="email" label="Fake Email" />
+          <InfoRow content={name.email} type="email" label="Fake Email" icon={<FaEnvelope />} />
           <InfoRow 
             content={disposableEmail.email} 
             type="disposableEmail" 
             label="Disposable Email"
+            icon={<FaHourglassStart />}
           >
 
             <div className="flex items-center">
@@ -291,7 +212,7 @@ Birthday: ${birthday}`;
                 href={disposableEmail.inboxUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-6 py-1 px-2 -mx-2 flex items-center text-[12px] text-gray-500 hover:text-blue-600 transition-colors relative group"
+                className="ml-10 py-1 px-2 -mx-2 flex items-center text-xs text-gray-500 hover:text-blue-600 transition-colors relative group"
               >
                 <FaChevronRight className="absolute -left-4 top-1/2 -translate-y-1/2 w-2 h-2 text-gray-400" />
                 <span>View Mailbox on {disposableEmail.label}</span>
@@ -299,10 +220,10 @@ Birthday: ${birthday}`;
               <InfoTooltip text={"This is a temporary inbox where you can receive emails. The inbox is public and emails are automatically deleted after 1-3 days depending on the provider."} />
             </div>
           </InfoRow>
-          <InfoRow content={username} type="username" label="Username" className="text-gray-500" />
-          <InfoRow content={phone} type="phone" label="Phone" />
-          <InfoRow content={address.full} type="address" label="Address" />
-          <InfoRow content={birthday} type="birthday" label="Birthday" />
+          <InfoRow content={username} type="username" label="Username" className="text-gray-500" icon={<FaAt />} />
+          <InfoRow content={phone} type="phone" label="Phone" icon={<FaPhone />} />
+          <InfoRow content={address.full} type="address" label="Address" icon={<FaMapMarkerAlt />} />
+          <InfoRow content={birthday} type="birthday" label="Birthday" icon={<FaBirthdayCake />} />
         </div>
       </div>
     </div>
@@ -321,6 +242,7 @@ const IdentityDisplay = () => {
       realistic: true,
       avataaars: true,
       randomuser: true,
+      notionists: true,
       identicon: true,
       personas: true,
       avataaarsNeutral: true,
@@ -394,6 +316,18 @@ const IdentityDisplay = () => {
     });
   };
 
+  const handleSelectOnlyProvider = (provider) => {
+    // Create a new object with all providers disabled except the selected one
+    const newProviders = Object.keys(enabledProviders).reduce((acc, key) => {
+      acc[key] = key === provider;
+      return acc;
+    }, {});
+    
+    // Save to local storage
+    ToolbarStorage.setAvatarProviders(newProviders);
+    setEnabledProviders(newProviders);
+  };
+
   return (
     <section className="content overflow-visible">
       <PageToolbar
@@ -401,45 +335,71 @@ const IdentityDisplay = () => {
         generateButtonText="More"
         className="items-center"
       >
-        <div className="flex items-center gap-4">
-          <select
-            value={genderPreference || ''}
-            onChange={(e) => {
-              const value = e.target.value || null;
-              setGenderPreference(value);
-              ToolbarStorage.setGenderPreference(value);
-            }}
-            className="select select-bordered select-sm w-[150px]"
-          >
-            <option value="" disabled>Pick Gender</option>
-            <option value="">Random</option>
-            <option value="male">Man</option>
-            <option value="female">Woman</option>
-          </select>
+        <select
+          value={genderPreference || ''}
+          onChange={(e) => {
+            const value = e.target.value || null;
+            setGenderPreference(value);
+            ToolbarStorage.setGenderPreference(value);
+          }}
+          className="select select-bordered select-sm w-full md:w-[150px]"
+        >
+          <option value="" disabled>Pick Gender</option>
+          <option value="">Random Gender</option>
+          <option value="male">Man</option>
+          <option value="female">Woman</option>
+        </select>
 
-          <div className="relative" ref={dropdownRef}>
-            <div className="dropdown">
-              <div tabIndex={0} role="button" className="btn btn-sm">
-                Avatar Types
+        <div className="relative w-full md:w-auto" ref={dropdownRef}>
+          <div className="dropdown w-full">
+            <div tabIndex={0} role="button" className="btn btn-sm w-full md:w-auto">
+              Avatar Types
+            </div>
+            <div tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-[280px]">
+              <div className="px-3 py-2 border-b border-base-200 mb-2">
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const allEnabled = Object.keys(enabledProviders).reduce((acc, key) => {
+                      acc[key] = true;
+                      return acc;
+                    }, {});
+                    ToolbarStorage.setAvatarProviders(allEnabled);
+                    setEnabledProviders(allEnabled);
+                  }}
+                  className="btn btn-xs btn-primary w-full text-white"
+                >
+                  Enable All
+                </button>
               </div>
-              <div tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-[280px]">
-                {Object.entries(avatarProviders).map(([key, provider]) => (
-                  <label key={key} className="flex items-center gap-3 px-3 py-2 hover:bg-base-200 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={enabledProviders[key]}
-                      onChange={() => handleProviderToggle(key)}
-                      className="checkbox checkbox-sm"
-                    />
-                    <img 
-                      src={provider.generate(sampleIdentity)}
-                      alt={provider.label}
-                      className="w-8 h-8 rounded-full bg-white object-cover"
-                    />
-                    <span className="text-sm">{provider.label}</span>
-                  </label>
-                ))}
-              </div>
+              {Object.entries(avatarProviders).map(([key, provider]) => (
+                <label key={key} className="flex items-center gap-3 px-3 py-2 hover:bg-base-200 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={enabledProviders[key]}
+                    onChange={() => handleProviderToggle(key)}
+                    className="checkbox checkbox-sm"
+                  />
+                  <img 
+                    src={provider.generate(sampleIdentity)}
+                    alt={provider.label}
+                    className="w-8 h-8 rounded-full bg-white object-cover"
+                  />
+                  <span className="text-sm">{provider.label}</span>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSelectOnlyProvider(key);
+                    }}
+                    className="ml-auto text-xs opacity-40 hover:opacity-100 btn btn-xs btn-ghost h-5 min-h-0 px-1.5 transition-opacity"
+                    title="Enable only this avatar type"
+                  >
+                    <span className="text-xs">only</span>
+                  </button>
+                </label>
+              ))}
             </div>
           </div>
         </div>
@@ -482,6 +442,15 @@ const IdentityPage = () => {
   return (
     <div className="container mx-auto p-4 overflow-visible">
       <h2 className="page-title">Identity Generator</h2>
+      
+      <div className="bg-indigo-100/70 py-4 px-8 rounded-lg mb-6 text-center">
+        <h3 className="mb-2">How to use a fake identity to protect your privacy</h3>
+        <p className="text-gray-700">
+          Protect your privacy online by using generated identities instead of your real information.
+          This helps prevent <a href="https://en.wikipedia.org/wiki/Doxxing" className="text-blue-500 hover:underline">doxxing</a> and keeps your personal data secure.
+        </p>
+      </div>
+      
       <IdentityDisplay />
       <div className="mt-16 text-center text-sm text-gray-400 space-y-2">
         <p>

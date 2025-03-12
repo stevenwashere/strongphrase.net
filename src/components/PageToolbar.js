@@ -49,7 +49,11 @@ const PageToolbar = ({
           </button>
         </div>
         <div className="space-y-6">
-          {children}
+          <div className="flex flex-col space-y-4 w-full">
+            {React.Children.map(children, child => (
+              <div className="w-full">{child}</div>
+            ))}
+          </div>
           <button
             onClick={() => setIsModalOpen(false)}
             className="w-full mt-4 btn btn-primary text-white"

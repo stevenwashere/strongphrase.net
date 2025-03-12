@@ -117,7 +117,7 @@ export const generateIdentity = (enabledProviders = null, sex = null) => {
   const name = generateName(sex);
   const phone = generatePhoneNumber();
   const address = generateAddress();
-  const avatar = generateAvatar(name, enabledProviders);
+  const avatar = generateAvatar(name, null, enabledProviders);
   const gradient = generateGradient();
   const birthday = generateBirthday();
   const disposable = generateDisposableEmail();
