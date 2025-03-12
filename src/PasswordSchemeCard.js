@@ -29,7 +29,7 @@ const PasswordSchemeCard = () => {
         <p>
           Use a <strong>password manager</strong> with <strong>unique, randomly-generated</strong> passwords for everything else. 
           It will generate random passwords for each website and automatically fill them for you each time you log-in, so you don't have to type them. 
-          (We suggest <a href="https://1password.com/" className="link" target="_blank" rel="noreferrer">1Password</a> or <a href="https://bitwarden.com/" className="link" target="_blank" rel="noreferrer">Bitwarden</a>). Turn on 2-factor authentication on your most important accounts (email, bank, etc.).
+          (We suggest <a href="https://1password.com/" className="link" target="_blank" rel="noreferrer">1Password</a>, <a href="https://bitwarden.com/" className="link" target="_blank" rel="noreferrer">Bitwarden</a>, or <a href="https://proton.me/pass" className="link" target="_blank" rel="noreferrer">Proton Pass</a>). Turn on 2-factor authentication on your most important accounts (email, bank, etc.).
         </p>
         <span className="mb-2 example-label font-bold">Examples:</span>
         <ul className="password-examples">
@@ -39,7 +39,8 @@ const PasswordSchemeCard = () => {
         
         <div className="card-actions justify-end">
           <a className="btn btn-secondary text-white mr-2" href="https://1password.com" target="_blank" rel="noreferrer">Get 1Password</a>
-          <a className="btn btn-secondary text-white" href="https://bitwarden.com" target="_blank" rel="noreferrer">Get Bitwarden</a>
+          <a className="btn btn-secondary text-white mr-2" href="https://bitwarden.com" target="_blank" rel="noreferrer">Get Bitwarden</a>
+          <a className="btn btn-secondary text-white" href="https://proton.me/pass" target="_blank" rel="noreferrer">Get Proton Pass</a>
         </div>
       </div>
     </div>
