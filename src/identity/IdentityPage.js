@@ -4,20 +4,56 @@ import PageToolbar from '../components/PageToolbar';
 import { 
   FaRegCopy, FaCheck, FaChevronRight, FaInfoCircle, 
   FaEnvelope, FaPhone, FaMapMarkerAlt, FaBirthdayCake, 
-  FaAt, FaHourglassStart, FaStar
+  FaAt, FaHourglassStart, FaStar, FaShieldAlt
  } from "react-icons/fa";
+import { Si1Password } from "react-icons/si";
 import { cn } from '../components/utils';
 import { avatarProviders } from './AvatarUtils';
 import ToolbarStorage from '../components/storage';
 import AvatarDownloadOverlay, { useAvatarDownload } from './AvatarDownload';
+import OnePasswordSaveButton from './OnePasswordSaveButton';
+
+// Custom styles for left-aligned tooltips
+const tooltipStyles = `
+  .tooltip-left-align:before {
+    transform: translateX(0) !important;
+    left: 0 !important;
+  }
+  .tooltip-left-align:after {
+    transform: translateX(0) !important;
+    left: 1rem !important;
+  }
+`;
 
 const IdentityCard = ({ identity, onCopy, copiedField }) => {
-  const { name, phone, address, avatar, gradient, id, birthday, username, disposableEmail } = identity;
+  const { name, phone, address, avatar, gradient, id, birthday, username, disposableEmail, passphrase } = identity;
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const imgRef = useRef(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const modalRef = useRef(null);
   
   const { downloadStatus, handleImageDownload } = useAvatarDownload(avatar, name);
+
+  // Inject custom tooltip styles
+  useEffect(() => {
+    // Check if the style element already exists
+    const existingStyle = document.getElementById('tooltip-custom-styles');
+    if (!existingStyle) {
+      const styleElement = document.createElement('style');
+      styleElement.id = 'tooltip-custom-styles';
+      styleElement.innerHTML = tooltipStyles;
+      document.head.appendChild(styleElement);
+      
+      // Clean up on unmount
+      return () => {
+        const styleToRemove = document.getElementById('tooltip-custom-styles');
+        if (styleToRemove) {
+          document.head.removeChild(styleToRemove);
+        }
+      };
+    }
+  }, []);
 
   // Create a reusable copy button component
   const CopyButton = ({ text, type, white = false, className = "", icon = <FaRegCopy />, size = "small", tooltip = null, tooltipPosition = "bottom" }) => {
@@ -48,8 +84,10 @@ const IdentityCard = ({ identity, onCopy, copiedField }) => {
             "absolute px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10",
             tooltipPosition === "right" && "left-full ml-2 top-1/2 -translate-y-1/2",
             tooltipPosition === "bottom" && "top-full mt-2 left-1/2 -translate-x-1/2",
+            tooltipPosition === "bottom-left" && "top-full mt-2 left-0",
             tooltipPosition === "left" && "right-full mr-2 top-1/2 -translate-y-1/2",
-            tooltipPosition === "top" && "bottom-full mb-2 left-1/2 -translate-x-1/2"
+            tooltipPosition === "top" && "bottom-full mb-2 left-1/2 -translate-x-1/2",
+            tooltipPosition === "top-right" && "bottom-full mb-2 right-0"
           )}>
             {tooltip}
           </div>
@@ -87,23 +125,21 @@ const IdentityCard = ({ identity, onCopy, copiedField }) => {
             'flex items-center py-1.5 px-2 cursor-pointer rounded -mx-2 group/row relative',
             !white && 'hover:bg-gray-50',
             isName ? 'justify-start' : 'justify-between',
+            label ? 'tooltip tooltip-top tooltip-left-align' : '',
             className
           )}
+          data-tip={label}
         >
-          <div className="flex items-center">
+          <div className="flex items-start">
             {!isName && icon && (
-              <span className="text-gray-300 mr-2 w-4 flex-shrink-0">
+              <span className={cn(`text-gray-300 mr-2 w-4 flex-shrink-0`,
+                type === "passphrase" ? "mt-1" : ""
+              )}>
                 {icon}
               </span>
             )}
             <span className={`${isName ? 'text-2xl font-semibold' : 'text-sm'} ${white ? 'text-white' : 'text-gray-700'} relative group/value`}>
-              {content}
-              {!isName && label && (
-                <div className="absolute top-1/2 left-full -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded 
-                  opacity-0 group-hover/value:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                  {label}
-                </div>
-              )}
+                {content}
             </span>
           </div>
           <CopyButton className={isName ? "!ml-2" : "!ml-4"} text={content} type={type} white={white} />
@@ -120,18 +156,47 @@ Email: ${name.email}
 Disposable Email: ${disposableEmail.email}
 Disposable Email Inbox: ${disposableEmail.inboxUrl}
 Username: ${username}
+Passphrase: ${passphrase}
 Phone: ${phone}
 Address: ${address.full}
 Birthday: ${birthday}`;
   };
+
+  // Function to handle opening the modal
+  const handleOpenModal = (e) => {
+    e.stopPropagation();
+    const saveModal = document.getElementById(`save-modal-${id}`);
+    if (saveModal) {
+      saveModal.showModal();
+      setModalOpen(true);
+    }
+  };
+
+  // Function to handle closing the modal
+  const handleCloseModal = () => {
+    setModalOpen(false);
+  };
+
+  // Effect to handle modal cleanup
+  useEffect(() => {
+    // Ensure the modal is properly closed when component unmounts
+    return () => {
+      const saveModal = document.getElementById(`save-modal-${id}`);
+      if (saveModal && saveModal.open) {
+        saveModal.close();
+      }
+    };
+  }, [id]);
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden">
       {/* Banner and Avatar Section */}
       <div>
         <div className={`h-12 md:h-20 lg:h-24 ${gradient[1]} ${gradient[0]} relative`}>
-          {/* Copy All Button */}
-          <div className="absolute top-2 left-2 md:left-4 md:top-4">
+          {/* Copy All Button and 1Password Save Button */}
+          <div className="absolute top-2 left-2 md:left-4 md:top-4 flex items-center gap-2">
+            
+            
             <CopyButton 
               text={formatIdentityForCopy()} 
               type="fullIdentity" 
@@ -140,9 +205,46 @@ Birthday: ${birthday}`;
               icon={<FaRegCopy />}
               className="bg-white/10 backdrop-blur-sm"
               tooltip="Copy identity to clipboard"
-              tooltipPosition="right"
+              tooltipPosition="bottom-left"
             />
+            
+            <button 
+              onClick={handleOpenModal}
+              className="p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors text-white relative group flex items-center justify-center"
+              title="Save to 1Password"
+            >
+              <Si1Password className="w-5 h-5" />
+              <div className="absolute px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 top-full mt-2 left-0">
+                Save to 1Password
+              </div>
+            </button>
           </div>
+          
+          {/* Modal for 1Password Save Button - moved outside the top bar */}
+          <dialog 
+            id={`save-modal-${id}`} 
+            className="modal"
+            onClose={handleCloseModal}
+            ref={modalRef}
+          >
+            <div className="modal-box">
+              <h3 className="font-bold text-lg mb-2">Save Identity to 1Password</h3>
+              <p className="">Save this generated identity to your 1Password vault for future use.</p>
+              {modalOpen && (
+                <div className="flex justify-center items-center">
+                  <OnePasswordSaveButton identity={identity} />
+                </div>
+              )}
+              <div className="modal-action">
+                <form method="dialog">
+                  <button className="btn">Close</button>
+                </form>
+              </div>
+            </div>
+            <form method="dialog" className="modal-backdrop">
+              <button>close</button>
+            </form>
+          </dialog>
         </div>
         <div className="px-6 -mt-8 md:-mt-12 lg:-mt-14 flex justify-between items-start">
           <div className="flex-1 pr-4 mt-16 md:mt-16 lg:mt-20">
@@ -212,7 +314,7 @@ Birthday: ${birthday}`;
                 href={disposableEmail.inboxUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-10 py-1 px-2 -mx-2 flex items-center text-xs text-gray-500 hover:text-blue-600 transition-colors relative group"
+                className="ml-10 py-1 px-2 -mx-2 flex items-start text-xs text-gray-500 hover:text-blue-600 transition-colors relative group"
               >
                 <FaChevronRight className="absolute -left-4 top-1/2 -translate-y-1/2 w-2 h-2 text-gray-400" />
                 <span>View Mailbox on {disposableEmail.label}</span>
@@ -221,6 +323,7 @@ Birthday: ${birthday}`;
             </div>
           </InfoRow>
           <InfoRow content={username} type="username" label="Username" className="text-gray-500" icon={<FaAt />} />
+          <InfoRow content={passphrase} type="passphrase" label="Passphrase" icon={<FaShieldAlt />} className="monospace text-sm font-mono text-left" />
           <InfoRow content={phone} type="phone" label="Phone" icon={<FaPhone />} />
           <InfoRow content={address.full} type="address" label="Address" icon={<FaMapMarkerAlt />} />
           <InfoRow content={birthday} type="birthday" label="Birthday" icon={<FaBirthdayCake />} />
@@ -443,12 +546,14 @@ const IdentityPage = () => {
     <div className="container mx-auto p-4 overflow-visible">
       <h2 className="page-title">Identity Generator</h2>
       
-      <div className="bg-indigo-100/70 py-4 px-8 rounded-lg mb-6 text-center">
-        <h3 className="mb-2">How to use a fake identity to protect your privacy</h3>
-        <p className="text-gray-700">
-          Protect your privacy online by using generated identities instead of your real information.
-          This helps prevent <a href="https://en.wikipedia.org/wiki/Doxxing" className="text-blue-500 hover:underline">doxxing</a> and keeps your personal data secure.
-        </p>
+      <div className="bg-indigo-100/70 py-4 px-8 rounded-lg mb-6">
+        <div className="text-center">
+          <h3 className="mb-2">How to use a fake identity to protect your privacy</h3>
+          <p className="text-gray-700">
+            Protect your privacy online by using generated identities instead of your real information.
+            This helps prevent <a href="https://en.wikipedia.org/wiki/Doxxing" className="text-blue-500 hover:underline">doxxing</a> and keeps your personal data secure.
+          </p>
+        </div>
       </div>
       
       <IdentityDisplay />

@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { generateUsername, usernameTypes } from '../username/username-generator';
 import { generateAvatar } from './AvatarUtils';
+import { getPassphrase } from '../passphraseUtils';
 
 const gradientPairs = [
   ['from-blue-500 to-purple-500', 'bg-gradient-to-r'],
@@ -121,6 +122,7 @@ export const generateIdentity = (enabledProviders = null, sex = null) => {
   const gradient = generateGradient();
   const birthday = generateBirthday();
   const disposable = generateDisposableEmail();
+  const passphrase = getPassphrase(58);
 
   return {
     name,
@@ -131,12 +133,13 @@ export const generateIdentity = (enabledProviders = null, sex = null) => {
       type: avatar.type,
       label: avatar.label
     },
+    passphrase,
     gradient,
     birthday,
     username: disposable.username,
     disposableEmail: disposable,
     id: faker.string.uuid(),
-    sex: name.sex
+    sex: name.sex,
   };
 };
 
